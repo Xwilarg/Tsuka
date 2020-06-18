@@ -1,4 +1,5 @@
 #include <iostream>
+#include <filesystem>
 
 #ifdef _WIN32
 # include <windows.h>
@@ -11,13 +12,43 @@
 
 namespace Tsuka
 {
-    Process::Process(std::string &&name) noexcept
-        : _name(std::move(name))
-    { }
+    Process::Process(std::string &&name)
+        : _name(std::move(name)), _path()
+    {
+#ifdef _WIN32
+        char* buf = nullptr;
+        size_t sz = 0;
+        _dupenv_s(&buf, &sz, "PATH");
+        std::string path(buf);
+        char delimitator = ';';
+#else
+        std::string path = std::getenv("PATH");
+        char delimitator = ':';
+#endif
+        size_t pos;
+        std::string token;
+        while ((pos = path.find(delimitator)) != std::string::npos) {
+            token = path.substr(0, pos);
+            if (IsPathValid(token))
+            {
+                _path = token;
+                return;
+            }
+            path.erase(0, pos + 1);
+        }
+        if (IsPathValid(path))
+            _path = path;
+        else
+            throw std::invalid_argument("Invalid file name " + _name);
+    }
+
+    bool Process::IsPathValid(const std::string &path) const noexcept
+    {
+        return std::filesystem::exists(std::filesystem::path(path) / _name);
+    }
 
     void Process::Start(const std::string &args) const
     {
-        std::string path = "/c/Program Files/CMake/bin";
 #ifdef _WIN32
         HANDLE g_hChildStd_OUT_Rd = nullptr;
         HANDLE g_hChildStd_OUT_Wr = nullptr;
@@ -39,14 +70,15 @@ namespace Tsuka
         siStartInfo.hStdOutput = g_hChildStd_OUT_Wr;
         siStartInfo.hStdInput = nullptr;
         siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
-        if (!::CreateProcessA(_name.c_str(),
+        std::string fullPath = (std::filesystem::path(_path) / _name).string();
+        if (!::CreateProcessA(fullPath.c_str(),
                             const_cast<char*>(args.c_str()),
                             nullptr,
                             nullptr,
                             TRUE,
                             0,
                             nullptr,
-                            const_cast<char*>(path.c_str()),
+                            const_cast<char*>(_path.c_str()),
                             &siStartInfo,
                             &piProcInfo))
         {
@@ -69,7 +101,7 @@ namespace Tsuka
         {
             throw std::runtime_error("Error while creating pipe: " + GetLastError());
         }
-        std::string fullPath = path + '/' + _name;
+        std::string fullPath = _path + '/' + _name;
         char appPathChr[fullPath.length() + 1];
         std::strcpy(appPathChr, fullPath.c_str());
         appPathChr[fullPath.length()] = '\0';
@@ -85,8 +117,7 @@ namespace Tsuka
             ::dup2(pipefd[1], 1);
             ::dup2(pipefd[1], 2);
             ::close(pipefd[1]);
-            std::cout << path.c_str() << std::endl;
-            if (::chdir(path.c_str()) == -1)
+            if (::chdir(_path.c_str()) == -1)
             {
                 throw std::runtime_error("Error while doing chdir: " + GetLastError());
             }
