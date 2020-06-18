@@ -1,7 +1,11 @@
 #!/bin/sh
 set -e
-mkdir -p build                   
+mkdir -p build
 cd build
 cmake ..
 cmake --build . --config RELEASE
-cp Release/Tsuka.exe ..
+if [ -d "Release" ]; then # MSVC
+    cp Release/Tsuka.exe ..
+else
+    cp Tsuka* ..
+fi
