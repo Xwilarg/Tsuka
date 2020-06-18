@@ -105,7 +105,13 @@ namespace Tsuka
         char appPathChr[fullPath.length() + 1];
         std::strcpy(appPathChr, fullPath.c_str());
         appPathChr[fullPath.length()] = '\0';
-        char* charArgs[] = { const_cast<char *>(args.c_str()), NULL };
+        char appNameChr[_name.length() + 1];
+        std::strcpy(appNameChr, _name.c_str());
+        appNameChr[_name.length()] = '\0';
+        char appArgsChr[args.length() + 1];
+        std::strcpy(appArgsChr, args.c_str());
+        appArgsChr[args.length()] = '\0';
+        char* charArgs[] = { appNameChr, appArgsChr, NULL };
         int forkId = ::fork();
         if (forkId == -1)
         {
