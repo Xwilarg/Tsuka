@@ -2,12 +2,12 @@
 
 #include "Process.hpp"
 
-int main()
+int main(int, char **, char **env)
 {
     Tsuka::Process cmake("cmake.exe");
     try
     {
-        cmake.Start("-v");
+        cmake.Start("--version", env);
     }
     catch(const std::exception& e)
     {

@@ -47,7 +47,7 @@ namespace Tsuka
         return std::filesystem::exists(std::filesystem::path(path) / _name);
     }
 
-    void Process::Start(const std::string &args) const
+    void Process::Start(const std::string &args, char **env) const
     {
 #ifdef _WIN32
         HANDLE g_hChildStd_OUT_Rd = nullptr;
@@ -105,7 +105,7 @@ namespace Tsuka
         char appPathChr[fullPath.length() + 1];
         std::strcpy(appPathChr, fullPath.c_str());
         appPathChr[fullPath.length()] = '\0';
-        char* charArgs[] = { appPathChr, NULL };
+        char* charArgs[] = { const_cast<char *>(args.c_str()), NULL };
         int forkId = ::fork();
         if (forkId == -1)
         {
@@ -117,11 +117,7 @@ namespace Tsuka
             ::dup2(pipefd[1], 1);
             ::dup2(pipefd[1], 2);
             ::close(pipefd[1]);
-            if (::chdir(_path.c_str()) == -1)
-            {
-                throw std::runtime_error("Error while doing chdir: " + GetLastError());
-            }
-            if (::execve(appPathChr, charArgs, nullptr) == -1)
+            if (::execve(appPathChr, charArgs, env) == -1)
             {
                 throw std::runtime_error("Error while doing execve: " + GetLastError());
             }

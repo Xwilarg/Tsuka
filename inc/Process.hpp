@@ -8,7 +8,7 @@ namespace Tsuka
     {
     public:
         Process(std::string &&name);
-        void Start(const std::string &args) const;
+        void Start(const std::string &args, char **env) const;
 
     private:
         bool IsPathValid(const std::string &path) const noexcept;
