@@ -73,8 +73,9 @@ namespace Tsuka
         siStartInfo.hStdInput = nullptr;
         siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
         std::string fullPath = (std::filesystem::path(_path) / _name).string();
+        std::string fullArgs = " " + args;
         if (!::CreateProcessW(std::wstring(fullPath.begin(), fullPath.end()).c_str(),
-                            const_cast<LPWSTR>(std::wstring(args.begin(), args.end()).c_str()),
+                            const_cast<LPWSTR>(std::wstring(fullArgs.begin(), fullArgs.end()).c_str()),
                             nullptr,
                             nullptr,
                             TRUE,
