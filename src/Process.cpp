@@ -3,6 +3,7 @@
 
 #ifdef _WIN32
 # include <windows.h>
+# include <codecvt>
 #else
 # include <unistd.h>
 # include <cstring>
@@ -48,7 +49,7 @@ namespace Tsuka
         return std::filesystem::exists(std::filesystem::path(path) / _name);
     }
 
-    void Process::Start(const std::string &args, char **env) const
+    void Process::Start(const std::string &args, [[maybe_unused]]char **env) const
     {
 #ifdef _WIN32
         HANDLE g_hChildStd_OUT_Rd = nullptr;
@@ -152,7 +153,8 @@ namespace Tsuka
                        nullptr, ::GetLastError(), MAKELANGID(LANG_NEUTRAL, SUBLANG_DEFAULT),
                        buf, (sizeof(buf) / sizeof(wchar_t)), nullptr);
         std::wstring str(buf);
-        return std::string(str.begin(), str.end());
+        std::wstring_convert<std::codecvt_utf8<wchar_t>, wchar_t> conv;
+        return conv.to_bytes(str);
 #else
         return strerror(errno);
 #endif
