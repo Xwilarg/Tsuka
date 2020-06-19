@@ -13,8 +13,8 @@
 
 namespace Tsuka
 {
-    Process::Process(std::string &&name)
-        : _name(std::move(name)), _path()
+    Process::Process(std::string &&name, bool createNewConsole)
+        : _name(std::move(name)), _path(), _createNewConsole(createNewConsole)
     {
 #ifdef _WIN32
         _name += ".exe";
@@ -79,7 +79,7 @@ namespace Tsuka
                             nullptr,
                             nullptr,
                             TRUE,
-                            0,
+                            _createNewConsole ? CREATE_NEW_CONSOLE : 0,
                             nullptr,
                             std::wstring(_path.begin(), _path.end()).c_str(),
                             &siStartInfo,
@@ -90,13 +90,13 @@ namespace Tsuka
         ::CloseHandle(piProcInfo.hProcess);
         ::CloseHandle(piProcInfo.hThread);
         DWORD dwRead;
-        CHAR chBuf[4096];
+        TCHAR chBuf[BUFSIZ];
         BOOL success;
         do
         {
             success = ::ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZ, &dwRead, nullptr);
             if (success && dwRead > 0)
-                std::cout << std::string(chBuf) << std::endl;
+                std::wcout << chBuf << std::endl;
         } while (!success || dwRead == 0);
 #else
         int pipefd[2];

@@ -4,10 +4,12 @@
 
 int main(int, char **, char **env)
 {
-    Tsuka::Process cmake("cmake");
+    Tsuka::Process cmake("cmake", true);
+    Tsuka::Process git("git");
     try
     {
         cmake.Start("--version", env);
+        git.Start("--version", env);
     }
     catch(const std::exception& e)
     {
