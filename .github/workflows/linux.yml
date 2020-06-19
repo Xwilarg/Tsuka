@@ -15,10 +15,10 @@ jobs:
     - uses: actions/checkout@v2
     - name: set apt source
       run:  sudo add-apt-repository ppa:ubuntu-toolchain-r/test
-    - name: install g++ 8
-      run:  sudo apt-get install g++-8
+    - name: install g++ 9
+      run:  sudo apt-get install g++-9
     - name: configure g++
-      run:  sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-8 30
+      run:  sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-9 30
     - name: build
       run: ./build.sh
     - name: launch
