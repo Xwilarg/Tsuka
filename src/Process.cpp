@@ -64,7 +64,7 @@ namespace Tsuka
             throw std::runtime_error("Error while creating pipe: " + GetLastError());
         }
         PROCESS_INFORMATION piProcInfo;
-        STARTUPINFO siStartInfo = { sizeof(STARTUPINFO) };
+        STARTUPINFOW siStartInfo = { sizeof(STARTUPINFOW) };
         ::ZeroMemory(&piProcInfo, sizeof(PROCESS_INFORMATION));
         ::ZeroMemory(&siStartInfo, sizeof(STARTUPINFO));
         siStartInfo.hStdError = g_hChildStd_OUT_Wr;
@@ -72,14 +72,14 @@ namespace Tsuka
         siStartInfo.hStdInput = nullptr;
         siStartInfo.dwFlags |= STARTF_USESTDHANDLES;
         std::string fullPath = (std::filesystem::path(_path) / _name).string();
-        if (!::CreateProcessA(fullPath.c_str(),
-                            const_cast<char*>(args.c_str()),
+        if (!::CreateProcessW(std::wstring(fullPath.begin(), fullPath.end()).c_str(),
+                            const_cast<LPWSTR>(std::wstring(args.begin(), args.end()).c_str()),
                             nullptr,
                             nullptr,
                             TRUE,
                             0,
                             nullptr,
-                            const_cast<char*>(_path.c_str()),
+                            std::wstring(_path.begin(), _path.end()).c_str(),
                             &siStartInfo,
                             &piProcInfo))
         {
