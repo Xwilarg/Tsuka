@@ -16,6 +16,7 @@ namespace Tsuka
         : _name(std::move(name)), _path()
     {
 #ifdef _WIN32
+        _name += ".exe";
         char* buf = nullptr;
         size_t sz = 0;
         _dupenv_s(&buf, &sz, "PATH");

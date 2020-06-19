@@ -4,7 +4,7 @@
 
 int main(int, char **, char **env)
 {
-    Tsuka::Process cmake("cmake.exe");
+    Tsuka::Process cmake("cmake");
     try
     {
         cmake.Start("--version", env);

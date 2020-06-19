@@ -13,7 +13,7 @@ namespace Tsuka
     private:
         bool IsPathValid(const std::string &path) const noexcept;
         std::string GetLastError() const noexcept;
-        const std::string _name;
+        std::string _name;
         std::string _path;
     };
 }
