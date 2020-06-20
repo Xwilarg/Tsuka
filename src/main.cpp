@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "Process.hpp"
+#include "IO.hpp"
 
 int main(int, char **, char **env)
 {
@@ -16,5 +17,6 @@ int main(int, char **, char **env)
         std::cerr << "Error while checking for versions: " << e.what() << std::endl;
         std::exit(1);
     }
+    Tsuka::IO::CreateDirectory("Tsuka");
     return 0;
 }
