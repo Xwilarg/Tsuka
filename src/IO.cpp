@@ -6,6 +6,7 @@ namespace Tsuka
 {
     void IO::CreateDirectory(const std::string &path) noexcept
     {
-        std::filesystem::create_directory(path);
+        if (!std::filesystem::exists(path))
+            std::filesystem::create_directory(path);
     }
 }
