@@ -4,16 +4,17 @@
 
 int main(int, char **, char **env)
 {
-    Tsuka::Process cmake("cmake", true);
-    Tsuka::Process git("git");
+    Tsuka::Process cmake("cmake", env, true);
+    Tsuka::Process git("git", env);
     try
     {
-        cmake.Start("--version", env);
-        git.Start("--version", env);
+        std::cout << "CMake version: " << cmake.GetVersion() << std::endl;
+        std::cout << "Git version: " << git.GetVersion() << std::endl;
     }
     catch(const std::exception& e)
     {
-        std::cerr << e.what() << std::endl;
+        std::cerr << "Error while checking for versions: " << e.what() << std::endl;
+        std::exit(1);
     }
     return 0;
 }

@@ -16,4 +16,4 @@ To solve this issue, Tsuka is inspired of Golang, just give the Git link of your
 ## Tools needed
 To use Tsuka you must have the following installed:
  - [Git](https://git-scm.com/downloads/)
- - [cmake](https://cmake.org/install/)
+ - [CMake](https://cmake.org/install/)

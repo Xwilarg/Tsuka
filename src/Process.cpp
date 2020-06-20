@@ -13,8 +13,8 @@
 
 namespace Tsuka
 {
-    Process::Process(std::string &&name, bool createNewConsole)
-        : _name(std::move(name)), _path(), _createNewConsole(createNewConsole)
+    Process::Process(std::string &&name, char **env, bool createNewConsole)
+        : _name(std::move(name)), _path(), _createNewConsole(createNewConsole), _versionLength(5), _env(env)
     {
 #ifdef _WIN32
         _name += ".exe";
@@ -44,13 +44,20 @@ namespace Tsuka
             throw std::invalid_argument("Invalid file name " + _name);
     }
 
-    bool Process::IsPathValid(const std::string &path) const noexcept
+    std::string Process::GetVersion()
     {
-        return std::filesystem::exists(std::filesystem::path(path) / _name);
+        std::string version = Start("--version");
+        size_t pos = version.find('\n');
+        if (pos != std::string::npos) {
+            version = version.substr(0, pos);
+        }
+        size_t length = _name.length() + _versionLength;
+        return version.substr(length);
     }
 
-    void Process::Start(const std::string &args, [[maybe_unused]]char **env) const
+    std::string Process::Start(const std::string &args) const
     {
+        std::string output = "";
 #ifdef _WIN32
         HANDLE g_hChildStd_OUT_Rd = nullptr;
         HANDLE g_hChildStd_OUT_Wr = nullptr;
@@ -90,13 +97,13 @@ namespace Tsuka
         ::CloseHandle(piProcInfo.hProcess);
         ::CloseHandle(piProcInfo.hThread);
         DWORD dwRead;
-        TCHAR chBuf[BUFSIZ];
+        CHAR chBuf[BUFSIZ];
         BOOL success;
         do
         {
             success = ::ReadFile(g_hChildStd_OUT_Rd, chBuf, BUFSIZ, &dwRead, nullptr);
             if (success && dwRead > 0)
-                std::wcout << chBuf << std::endl;
+                output += std::string(chBuf) + '\n';
         } while (!success || dwRead == 0);
 #else
         int pipefd[2];
@@ -126,7 +133,7 @@ namespace Tsuka
             ::dup2(pipefd[1], 1);
             ::dup2(pipefd[1], 2);
             ::close(pipefd[1]);
-            if (::execve(appPathChr, charArgs, env) == -1)
+            if (::execve(appPathChr, charArgs, _env) == -1)
             {
                 throw std::runtime_error("Error while doing execve: " + GetLastError());
             }
@@ -139,11 +146,17 @@ namespace Tsuka
             while (size != 0)
             {
                 buffer[size] = '\0';
-                std::cout << std::string(buffer) << std::endl;
+                output += std::string(buffer) + '\n';
                 size = ::read(pipefd[0], buffer, sizeof(buffer));
             }
         }
 #endif
+        return output;
+    }
+
+    bool Process::IsPathValid(const std::string &path) const noexcept
+    {
+        return std::filesystem::exists(std::filesystem::path(path) / _name);
     }
 
     std::string Process::GetLastError() const noexcept
