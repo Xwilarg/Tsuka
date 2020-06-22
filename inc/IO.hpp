@@ -7,7 +7,7 @@ namespace Tsuka
     class IO
     {
     public:
-        static void CreateDirectory(const std::string &path) noexcept;
+        static bool CreateDirectory(const std::string &path) noexcept;
         static void SetCurrentDirectory(const std::string &path) noexcept;
     };
 }

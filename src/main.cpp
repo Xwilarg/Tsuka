@@ -1,4 +1,5 @@
 #include <iostream>
+#include <regex>
 
 #include "Process.hpp"
 #include "IO.hpp"
@@ -15,8 +16,19 @@ int main(int argc, char **argv, char **env)
         std::cout << GetHelp() << std::endl;
         return 1;
     }
-    Tsuka::Process cmake("cmake", env, true);
     Tsuka::Process git("git", env);
+    std::string url = std::string(argv[1]);
+
+    // Check is remote URL is valid
+    int status;
+    git.Start("ls-remote " + url, status);
+    if (status != 0)
+    {
+        std::cerr << "Invalid URL " << url << std::endl;
+    }
+
+    // Check if the user have Git and CMake
+    Tsuka::Process cmake("cmake", env, true);
     try
     {
         std::cout << "CMake version: " << cmake.GetVersion() << std::endl;
@@ -27,14 +39,21 @@ int main(int argc, char **argv, char **env)
         std::cerr << "Error while checking for versions: " << e.what() << std::endl;
         return 1;
     }
-    std::cout << std::endl;
+
+    // Create build directory
     Tsuka::IO::CreateDirectory("Tsuka");
     Tsuka::IO::SetCurrentDirectory("Tsuka");
-    int status;
-    git.Start("ls-remote " + std::string(argv[1]), status);
-    if (status != 0)
+
+    std::regex repoNameRegex("github.com\\/[^\\/]+\\/([^\\/]+)");
+    std::smatch matches;
+    std::regex_search(url, matches, repoNameRegex); // Is not supposed to fail
+    std::string repoName = matches[1];
+    if (!Tsuka::IO::CreateDirectory(repoName))
     {
-        std::cerr << "Invalid URL " << argv[1] << std::endl;
+        std::cout << std::endl << "Cloning " << repoName << "...";
+        Tsuka::IO::CreateDirectory(repoName);
+        git.Start("clone " + url, status);
+        std::cout << " Done!" << std::endl;
     }
     return 0;
 }
