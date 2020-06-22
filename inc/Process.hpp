@@ -8,7 +8,7 @@ namespace Tsuka
     {
     public:
         Process(std::string &&name, char **env, bool createNewConsole = false);
-        std::string Start(const std::string &args) const;
+        std::string Start(const std::string &args, int &returnValue) const;
         std::string GetVersion();
 
     private:

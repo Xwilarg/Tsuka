@@ -3,8 +3,18 @@
 #include "Process.hpp"
 #include "IO.hpp"
 
-int main(int, char **, char **env)
+std::string GetHelp()
 {
+    return "TODO";
+}
+
+int main(int argc, char **argv, char **env)
+{
+    if (argc <= 1)
+    {
+        std::cout << GetHelp() << std::endl;
+        return 1;
+    }
     Tsuka::Process cmake("cmake", env, true);
     Tsuka::Process git("git", env);
     try
@@ -15,9 +25,16 @@ int main(int, char **, char **env)
     catch(const std::exception& e)
     {
         std::cerr << "Error while checking for versions: " << e.what() << std::endl;
-        std::exit(1);
+        return 1;
     }
+    std::cout << std::endl;
     Tsuka::IO::CreateDirectory("Tsuka");
     Tsuka::IO::SetCurrentDirectory("Tsuka");
+    int status;
+    git.Start("ls-remote " + std::string(argv[1]), status);
+    if (status != 0)
+    {
+        std::cerr << "Invalid URL " << argv[1] << std::endl;
+    }
     return 0;
 }

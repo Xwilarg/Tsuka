@@ -6,6 +6,7 @@
 # include <codecvt>
 #else
 # include <unistd.h>
+# include <sys/wait.h>
 # include <cstring>
 #endif
 
@@ -46,7 +47,8 @@ namespace Tsuka
 
     std::string Process::GetVersion()
     {
-        std::string version = Start("--version");
+        int tmp;
+        std::string version = Start("--version", tmp);
         size_t pos = version.find('\n');
         if (pos != std::string::npos) {
             version = version.substr(0, pos);
@@ -55,7 +57,7 @@ namespace Tsuka
         return version.substr(length);
     }
 
-    std::string Process::Start(const std::string &args) const
+    std::string Process::Start(const std::string &args, int &returnValue) const
     {
         std::string output = "";
 #ifdef _WIN32
@@ -94,8 +96,6 @@ namespace Tsuka
         {
             throw std::runtime_error("Failed to create new process: " + GetLastError());
         }
-        ::CloseHandle(piProcInfo.hProcess);
-        ::CloseHandle(piProcInfo.hThread);
         DWORD dwRead;
         CHAR chBuf[BUFSIZ];
         BOOL success;
@@ -105,6 +105,14 @@ namespace Tsuka
             if (success && dwRead > 0)
                 output += std::string(chBuf) + '\n';
         } while (!success || dwRead == 0);
+        DWORD returnValueWin;
+        if (!GetExitCodeProcess(piProcInfo.hProcess, &returnValueWin))
+        {
+            throw std::runtime_error("Failed to get return status: " + GetLastError());
+        }
+        ::CloseHandle(piProcInfo.hProcess);
+        ::CloseHandle(piProcInfo.hThread);
+        returnValue = returnValueWin;
 #else
         int pipefd[2];
         if (::pipe(pipefd) == -1)
@@ -149,6 +157,7 @@ namespace Tsuka
                 output += std::string(buffer) + '\n';
                 size = ::read(pipefd[0], buffer, sizeof(buffer));
             }
+            waitpid(forkId, &returnValue, 0);
         }
 #endif
         return output;
