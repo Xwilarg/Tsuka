@@ -8,5 +8,6 @@ namespace Tsuka
     {
     public:
         static void CreateDirectory(const std::string &path) noexcept;
+        static void SetCurrentDirectory(const std::string &path) noexcept;
     };
 }

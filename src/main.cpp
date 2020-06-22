@@ -18,5 +18,6 @@ int main(int, char **, char **env)
         std::exit(1);
     }
     Tsuka::IO::CreateDirectory("Tsuka");
+    Tsuka::IO::SetCurrentDirectory("Tsuka");
     return 0;
 }
