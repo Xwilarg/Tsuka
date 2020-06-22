@@ -57,10 +57,64 @@ namespace Tsuka
         return version.substr(length);
     }
 
+    std::string Process::Start(const std::vector<std::string> args, int &returnValue) const
+    {
+#ifdef _WIN32
+        return Start(ArrayToString(args, ' '), returnValue);
+#else
+        std::string output = "";
+        int pipefd[2];
+        if (::pipe(pipefd) == -1)
+        {
+            throw std::runtime_error("Error while creating pipe: " + GetLastError());
+        }
+        std::string fullPath = _path + '/' + _name;
+        char appPathChr[fullPath.length() + 1];
+        std::strcpy(appPathChr, fullPath.c_str());
+        appPathChr[fullPath.length()] = '\0';
+        char appNameChr[_name.length() + 1];
+        std::strcpy(appNameChr, _name.c_str());
+        appNameChr[_name.length()] = '\0';
+        char **charArgs = ArrayToCArray(appNameChr, args);
+        int forkId = ::fork();
+        if (forkId == -1)
+        {
+            throw std::runtime_error("Error while doing fork: " + GetLastError());
+        }
+        if (forkId == 0)
+        {
+            ::close(pipefd[0]);
+            ::dup2(pipefd[1], 1);
+            ::dup2(pipefd[1], 2);
+            ::close(pipefd[1]);
+            if (::execve(appPathChr, charArgs, _env) == -1)
+            {
+                throw std::runtime_error("Error while doing execve: " + GetLastError());
+            }
+            for (int i = 0; charArgs[i] != nullptr; i++)
+                free(charArgs[i]);
+        }
+        else
+        {
+            char buffer[4096];
+            ::close(pipefd[1]);
+            int size = read(pipefd[0], buffer, sizeof(buffer) - 1);
+            while (size != 0)
+            {
+                buffer[size] = '\0';
+                output += std::string(buffer) + '\n';
+                size = ::read(pipefd[0], buffer, sizeof(buffer));
+            }
+            waitpid(forkId, &returnValue, 0);
+        }
+        return output;
+#endif
+    }
+
     std::string Process::Start(const std::string &args, int &returnValue) const
     {
-        std::string output = "";
 #ifdef _WIN32
+        std::string output = "";
         HANDLE g_hChildStd_OUT_Rd = nullptr;
         HANDLE g_hChildStd_OUT_Wr = nullptr;
 
@@ -113,54 +167,43 @@ namespace Tsuka
         ::CloseHandle(piProcInfo.hProcess);
         ::CloseHandle(piProcInfo.hThread);
         returnValue = returnValueWin;
-#else
-        int pipefd[2];
-        if (::pipe(pipefd) == -1)
-        {
-            throw std::runtime_error("Error while creating pipe: " + GetLastError());
-        }
-        std::string fullPath = _path + '/' + _name;
-        char appPathChr[fullPath.length() + 1];
-        std::strcpy(appPathChr, fullPath.c_str());
-        appPathChr[fullPath.length()] = '\0';
-        char appNameChr[_name.length() + 1];
-        std::strcpy(appNameChr, _name.c_str());
-        appNameChr[_name.length()] = '\0';
-        char appArgsChr[args.length() + 1];
-        std::strcpy(appArgsChr, args.c_str());
-        appArgsChr[args.length()] = '\0';
-        char* charArgs[] = { appNameChr, appArgsChr, NULL };
-        int forkId = ::fork();
-        if (forkId == -1)
-        {
-            throw std::runtime_error("Error while doing fork: " + GetLastError());
-        }
-        if (forkId == 0)
-        {
-            ::close(pipefd[0]);
-            ::dup2(pipefd[1], 1);
-            ::dup2(pipefd[1], 2);
-            ::close(pipefd[1]);
-            if (::execve(appPathChr, charArgs, _env) == -1)
-            {
-                throw std::runtime_error("Error while doing execve: " + GetLastError());
-            }
-        }
-        else
-        {
-            char buffer[4096];
-            ::close(pipefd[1]);
-            int size = read(pipefd[0], buffer, sizeof(buffer) - 1);
-            while (size != 0)
-            {
-                buffer[size] = '\0';
-                output += std::string(buffer) + '\n';
-                size = ::read(pipefd[0], buffer, sizeof(buffer));
-            }
-            waitpid(forkId, &returnValue, 0);
-        }
-#endif
         return output;
+#else
+        return Start({args}, returnValue);
+#endif
+    }
+
+    char** Process::ArrayToCArray([[maybe_unused]]const std::string &firstArg, [[maybe_unused]]const std::vector<std::string> &args) const
+#ifdef _WIN32
+#else
+    noexcept
+#endif
+    {
+#ifdef _WIN32
+        throw std::runtime_error("ArrayToCArray must not be called on Windows");
+#else
+        char **arr = (char**)malloc(sizeof(char*) * args.size() + 2);
+        arr[0] = (char*)malloc(sizeof(char) * firstArg.length() + 1);
+        std::strcpy(arr[0], firstArg.c_str());
+        for (size_t i = 0; i < args.size(); i++)
+        {
+            arr[i + 1] = (char*)malloc(sizeof(char) * args[i].length() + 1);
+            std::strcpy(arr[i + 1], args[i].c_str());
+        }
+        arr[args.size() + 1] = nullptr;
+        return arr;
+#endif
+    }
+
+    // args length must be > 0
+    std::string Process::ArrayToString(const std::vector<std::string> args, char separator) const noexcept
+    {
+        std::string res = args[0];
+        for (int i = 1; i < args.size(); i++)
+        {
+            res += separator + args[i];
+        }
+        return res;
     }
 
     bool Process::IsPathValid(const std::string &path) const noexcept

@@ -21,10 +21,12 @@ int main(int argc, char **argv, char **env)
 
     // Check is remote URL is valid
     int status;
-    git.Start("ls-remote " + url, status);
+    git.Start({"ls-remote", url}, status);
+
     if (status != 0)
     {
         std::cerr << "Invalid URL " << url << std::endl;
+        return 1;
     }
 
     // Check if the user have Git and CMake
@@ -52,7 +54,7 @@ int main(int argc, char **argv, char **env)
     {
         std::cout << std::endl << "Cloning " << repoName << "...";
         Tsuka::IO::CreateDirectory(repoName);
-        git.Start("clone " + url, status);
+        git.Start({"clone ", url}, status);
         std::cout << " Done!" << std::endl;
     }
     return 0;
