@@ -166,6 +166,7 @@ namespace Tsuka
             if (success && dwRead > 0)
                 output += std::string(chBuf) + '\n';
         } while (!success || dwRead == 0);
+        WaitForSingleObject(piProcInfo.hProcess, INFINITE);
         DWORD returnValueWin;
         if (!GetExitCodeProcess(piProcInfo.hProcess, &returnValueWin))
         {
