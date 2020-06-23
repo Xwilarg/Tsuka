@@ -15,7 +15,13 @@
 namespace Tsuka
 {
     Process::Process(std::string &&name, char **env, bool createNewConsole)
-        : _name(std::move(name)), _path(), _createNewConsole(createNewConsole), _versionLength(5), _env(env)
+        : _name(std::move(name)), _path(), _createNewConsole(createNewConsole), _versionLength(
+#ifdef _WIN32
+        7
+#else
+        9
+#endif
+        ), _env(env)
     {
 #ifdef _WIN32
         _name += ".exe";
@@ -54,7 +60,7 @@ namespace Tsuka
             version = version.substr(0, pos);
         }
         size_t length = _name.length() + _versionLength;
-        return version.substr(length);
+        return version.substr(length, version.length() - length);
     }
 
     std::string Process::Start(const std::vector<std::string> args, int &returnValue) const

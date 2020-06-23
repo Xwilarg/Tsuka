@@ -43,14 +43,14 @@ int main(int argc, char **argv, char **env)
     }
 
     // Create build directory
-    Tsuka::IO::CreateDirectory("Tsuka");
-    Tsuka::IO::SetCurrentDirectory("Tsuka");
+    Tsuka::IO::CreateDirectory("Tsuka-build");
+    Tsuka::IO::SetCurrentDirectory("Tsuka-build");
 
     std::regex repoNameRegex("github.com\\/[^\\/]+\\/([^\\/]+)");
     std::smatch matches;
     std::regex_search(url, matches, repoNameRegex); // Is not supposed to fail
     std::string repoName = matches[1];
-    if (!Tsuka::IO::CreateDirectory(repoName))
+    if (Tsuka::IO::CreateDirectory(repoName))
     {
         std::cout << std::endl << "Cloning " << repoName << "...";
         Tsuka::IO::CreateDirectory(repoName);
