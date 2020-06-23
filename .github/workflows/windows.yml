@@ -16,4 +16,4 @@ jobs:
     - name: build
       run: ./build.ps1
     - name: launch
-      run: ./Tsuka.exe
+      run: ./Tsuka.exe https://github.com/Xwilarg/Tsuka

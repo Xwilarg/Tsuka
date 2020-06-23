@@ -22,4 +22,4 @@ jobs:
     - name: build
       run: ./build.sh
     - name: launch
-      run: ./Tsuka
+      run: ./Tsuka https://github.com/Xwilarg/Tsuka

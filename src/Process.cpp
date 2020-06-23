@@ -91,8 +91,6 @@ namespace Tsuka
             {
                 throw std::runtime_error("Error while doing execve: " + GetLastError());
             }
-            for (int i = 0; charArgs[i] != nullptr; i++)
-                free(charArgs[i]);
         }
         else
         {
@@ -107,6 +105,9 @@ namespace Tsuka
             }
             waitpid(forkId, &returnValue, 0);
         }
+        for (int i = 0; charArgs[i] != nullptr; i++)
+            free(charArgs[i]);
+        free(charArgs);
         return output;
 #endif
     }
@@ -169,7 +170,7 @@ namespace Tsuka
         returnValue = returnValueWin;
         return output;
 #else
-        return Start({args}, returnValue);
+        return Start(std::vector<std::string>{args}, returnValue);
 #endif
     }
 
@@ -182,12 +183,12 @@ namespace Tsuka
 #ifdef _WIN32
         throw std::runtime_error("ArrayToCArray must not be called on Windows");
 #else
-        char **arr = (char**)malloc(sizeof(char*) * args.size() + 2);
-        arr[0] = (char*)malloc(sizeof(char) * firstArg.length() + 1);
+        char **arr = (char**)malloc(sizeof(char*) * (args.size() + 2));
+        arr[0] = (char*)malloc(sizeof(char) * (firstArg.length() + 1));
         std::strcpy(arr[0], firstArg.c_str());
         for (size_t i = 0; i < args.size(); i++)
         {
-            arr[i + 1] = (char*)malloc(sizeof(char) * args[i].length() + 1);
+            arr[i + 1] = (char*)malloc(sizeof(char) * (args[i].length() + 1));
             std::strcpy(arr[i + 1], args[i].c_str());
         }
         arr[args.size() + 1] = nullptr;
@@ -199,7 +200,7 @@ namespace Tsuka
     std::string Process::ArrayToString(const std::vector<std::string> args, char separator) const noexcept
     {
         std::string res = args[0];
-        for (int i = 1; i < args.size(); i++)
+        for (size_t i = 1; i < args.size(); i++)
         {
             res += separator + args[i];
         }
