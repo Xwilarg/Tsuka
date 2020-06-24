@@ -9,6 +9,11 @@ std::string GetHelp()
     return "TODO";
 }
 
+void DisplayErrorMessage(const std::string &msg)
+{
+    std::cerr << "\033[0;31m" << msg << "\033[0m" << std::endl;
+}
+
 int main(int argc, char **argv, char **env)
 {
     if (argc <= 1)
@@ -25,7 +30,7 @@ int main(int argc, char **argv, char **env)
 
     if (status != 0)
     {
-        std::cerr << "Invalid URL " << url << std::endl;
+        DisplayErrorMessage("Invalid URL " + url);
         return 1;
     }
 
@@ -38,7 +43,7 @@ int main(int argc, char **argv, char **env)
     }
     catch(const std::exception& e)
     {
-        std::cerr << "Error while checking for versions: " << e.what() << std::endl;
+        DisplayErrorMessage("Error while checking for versions: " + std::string(e.what()));
         return 1;
     }
 
@@ -53,9 +58,33 @@ int main(int argc, char **argv, char **env)
     if (Tsuka::IO::CreateDirectory(repoName))
     {
         std::cout << std::endl << "Cloning " << repoName << "...";
-        Tsuka::IO::CreateDirectory(repoName);
-        git.Start({"clone ", url}, status);
-        std::cout << " Done!" << std::endl;
+        std::string output = git.Start({"clone", "--recurse-submodules", url}, status);
+        if (status != 0)
+        {
+            Tsuka::IO::DeleteDirectory(repoName);
+            DisplayErrorMessage("\nError while cloning repository:\n" + output);
+            return 1;
+        }
+        std::cout << " Done!" << std::endl << std::endl;
     }
+    Tsuka::IO::SetCurrentDirectory(repoName);
+
+    Tsuka::IO::CreateDirectory("build");
+    Tsuka::IO::SetCurrentDirectory("build");
+    std::cout << "Executing CMake...";
+    std::string output;
+    output = cmake.Start("..", status);
+    if (status != 0)
+    {
+        DisplayErrorMessage("\nError while executing cmake:\n" + output);
+        return 1;
+    }
+    output = cmake.Start({"--build", ".", "--config", "RELEASE"}, status);
+    if (status != 0)
+    {
+        DisplayErrorMessage("\nError while executing cmake:\n" + output);
+        return 1;
+    }
+    std::cout << " Done!" << std::endl << std::endl;
     return 0;
 }

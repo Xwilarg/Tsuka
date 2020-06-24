@@ -18,6 +18,11 @@ namespace Tsuka
         return true;
     }
 
+    void IO::DeleteDirectory(const std::string &path) noexcept
+    {
+        std::filesystem::remove_all(path);
+    }
+
     void IO::SetCurrentDirectory(const std::string &path) noexcept
     {
 #ifdef _WIN32
