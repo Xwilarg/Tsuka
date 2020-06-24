@@ -55,7 +55,7 @@ int main(int argc, char **argv, char **env)
     std::smatch matches;
     std::regex_search(url, matches, repoNameRegex); // Is not supposed to fail
     std::string repoName = matches[1];
-    if (Tsuka::IO::CreateDirectory(repoName))
+    if (!Tsuka::IO::DoesDirectoryExists(repoName))
     {
         std::cout << std::endl << "Cloning " << repoName << "...";
         std::string output = git.Start({"clone", "--recurse-submodules", url}, status);

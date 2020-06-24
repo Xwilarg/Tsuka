@@ -10,12 +10,15 @@
 
 namespace Tsuka
 {
-    bool IO::CreateDirectory(const std::string &path) noexcept
+    bool IO::DoesDirectoryExists(const std::string &path) noexcept
     {
-        if (std::filesystem::exists(path))
-            return false;
-        std::filesystem::create_directory(path);
-        return true;
+        return std::filesystem::exists(path);
+    }
+
+    void IO::CreateDirectory(const std::string &path) noexcept
+    {
+        if (!std::filesystem::exists(path))
+            std::filesystem::create_directory(path);
     }
 
     void IO::DeleteDirectory(const std::string &path) noexcept
